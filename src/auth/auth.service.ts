@@ -15,7 +15,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   /**
    * Register a new user
@@ -107,6 +107,7 @@ export class AuthService {
     // Prevent N+1 issues by picking exactly what we need directly using primary key
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
+      select: { id: true, email: true, role: true, refreshToken: true }
     });
 
     if (!user || !user.refreshToken) {
@@ -134,16 +135,9 @@ export class AuthService {
    * Revoke tokens on logout
    */
   async logout(userId: string) {
-    await this.prisma.user.updateMany({
-      where: {
-        id: userId,
-        refreshToken: {
-          not: null,
-        },
-      },
-      data: {
-        refreshToken: null,
-      },
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { refreshToken: null },
     });
 
     return { message: 'Logged out successfully' };
