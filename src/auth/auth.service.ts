@@ -1,9 +1,11 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
@@ -73,14 +75,14 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Invalid email');
     }
 
     // Compare hash
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Invalid password');
     }
 
     // Generate tokens
@@ -141,6 +143,61 @@ export class AuthService {
     });
 
     return { message: 'Logged out successfully' };
+  }
+
+  /**
+   * Creates a one-hour reset token for the account (if it exists).
+   * Response is always generic; in non-production, `devResetToken` is included for local testing.
+   */
+  async forgotPassword(email: string) {
+    const generic = {
+      message:
+        'If an account exists for this email, password reset instructions have been sent.',
+    };
+
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) return generic;
+
+    const token = randomBytes(32).toString('hex');
+    const passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordResetToken: token, passwordResetExpires },
+    });
+
+    if (process.env.NODE_ENV !== 'production') {
+      return { ...generic, devResetToken: token };
+    }
+    return generic;
+  }
+
+  async resetPassword(token: string, password: string) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        passwordResetToken: token,
+        passwordResetExpires: { gt: new Date() },
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired reset link');
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+        refreshToken: null,
+      },
+    });
+
+    return { message: 'Password has been reset. You can sign in now.' };
   }
 
   // --- Helpers ---
