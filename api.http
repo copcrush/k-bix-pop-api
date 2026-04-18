@@ -1,5 +1,6 @@
 ### Variables
-@baseUrl = http://localhost:8888
+# Nest `main.ts` uses global prefix `api`
+@baseUrl = http://localhost:8888/api
 @email = test_user@example.com
 @password = supersecurepassword123
 # The access token is populated automatically when you run the Login request

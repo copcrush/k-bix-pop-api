@@ -11,6 +11,8 @@ import {
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import type { Request, Response } from 'express';
 import { JwtAuthGuard } from 'src/auth/strategies/jwt-auth.guard';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
@@ -31,7 +33,16 @@ export class AuthController {
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) response: Response,
   ) {
+    console.log('[k-bix-pop-api] POST /auth/login received', {
+      email: loginDto.email,
+    });
+
     const loginData = await this.authService.login(loginDto);
+
+    console.log('[k-bix-pop-api] POST /auth/login success', {
+      userId: loginData.user.id,
+      email: loginData.user.email,
+    });
 
     // Set refresh token as a secure HttpOnly cookie
     response.cookie('refresh_token', loginData.refreshToken, {
@@ -95,6 +106,18 @@ export class AuthController {
       response.clearCookie('refresh_token');
       return response.status(401).json({ message: 'Invalid refresh token' });
     }
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto.email);
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.token, dto.password);
   }
 
   @Post('logout')
