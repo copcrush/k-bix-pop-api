@@ -33,16 +33,7 @@ export class AuthController {
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) response: Response,
   ) {
-    console.log('[k-bix-pop-api] POST /auth/login received', {
-      email: loginDto.email,
-    });
-
     const loginData = await this.authService.login(loginDto);
-
-    console.log('[k-bix-pop-api] POST /auth/login success', {
-      userId: loginData.user.id,
-      email: loginData.user.email,
-    });
 
     // Set refresh token as a secure HttpOnly cookie
     response.cookie('refresh_token', loginData.refreshToken, {
