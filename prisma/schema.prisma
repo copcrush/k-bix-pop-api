@@ -22,12 +22,34 @@ model User {
   password              String
   firstName             String?
   lastName              String?
+  phone                 String?
   role                  Role      @default(USER)
   refreshToken          String?
   passwordResetToken    String?   @unique
   passwordResetExpires  DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+  addresses             Address[]
 
   @@map("users")
+}
+
+model Address {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label           String?
+  recipientName   String
+  line1           String
+  line2           String?
+  city            String
+  stateRegion     String?
+  postalCode      String
+  country         String
+  isDefault       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@map("addresses")
 }
