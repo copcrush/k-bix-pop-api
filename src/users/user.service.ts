@@ -4,8 +4,10 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { UserEntity } from './entities/user.entity';
 import { ManageUserDto } from './dto/manage-user.dto';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
@@ -43,9 +45,10 @@ export class UserService {
   constructor(private prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.user.findMany({
+    const rows = await this.prisma.user.findMany({
       select: userPublicSelect,
     });
+    return rows.map((row) => plainToInstance(UserEntity, row));
   }
 
   async findSafeById(userId: string) {
@@ -54,7 +57,7 @@ export class UserService {
       select: userPublicSelect,
     });
     if (!user) throw new NotFoundException('User not found');
-    return user;
+    return plainToInstance(UserEntity, user);
   }
 
   /**
@@ -125,7 +128,7 @@ export class UserService {
         select: userPublicSelect,
       });
       if (!user) throw new NotFoundException('User not found');
-      return user;
+      return plainToInstance(UserEntity, user);
     });
   }
 
