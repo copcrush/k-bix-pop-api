@@ -1,12 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from './prisma.service';
+import { AppConfigService } from '../config/app-config.service';
 
 describe('PrismaService', () => {
   let service: PrismaService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [PrismaService],
+      providers: [
+        PrismaService,
+        {
+          provide: AppConfigService,
+          useValue: {
+            get databaseUrl() {
+              return process.env.DATABASE_URL ?? 'postgresql://localhost:5432/test';
+            },
+          },
+        },
+      ],
     }).compile();
 
     service = module.get<PrismaService>(PrismaService);

@@ -6,11 +6,17 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { randomBytes } from 'crypto';
+import { plainToInstance } from 'class-transformer';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
+import { UserEntity } from '../users/entities/user.entity';
+import {
+  AuthLoginResponseEntity,
+  AuthRegisterResponseEntity,
+} from './entities/auth-response.entity';
 
 @Injectable()
 export class AuthService {
@@ -50,13 +56,12 @@ export class AuthService {
         },
       });
 
-      // Avoid returning the password block
       const { password: _, refreshToken: __, ...safeUser } = user;
 
-      return {
+      return plainToInstance(AuthRegisterResponseEntity, {
         message: 'User registered successfully',
-        user: safeUser,
-      };
+        user: plainToInstance(UserEntity, safeUser),
+      });
     } catch (error) {
       throw new InternalServerErrorException('Failed to register user');
     }
@@ -93,12 +98,12 @@ export class AuthService {
 
     const { password: _, refreshToken: __, ...safeUser } = user;
 
-    return {
+    return plainToInstance(AuthLoginResponseEntity, {
       message: 'Login successful',
-      user: safeUser,
+      user: plainToInstance(UserEntity, safeUser),
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-    };
+    });
   }
 
   /**

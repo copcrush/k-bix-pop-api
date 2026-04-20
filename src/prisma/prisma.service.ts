@@ -1,18 +1,13 @@
 import { Injectable, OnModuleInit } from '@nestjs/common'
 import { PrismaClient } from '@prisma/client'
+import { AppConfigService } from '../config/app-config.service'
 import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
 
-try {
-  process.loadEnvFile()
-} catch (e) {
-  // Ignored if .env missing or already loaded
-}
-
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
-  constructor() {
-    const connectionString = process.env.DATABASE_URL
+  constructor(private readonly appConfig: AppConfigService) {
+    const connectionString = appConfig.databaseUrl
     const pool = new Pool({ connectionString })
     const adapter = new PrismaPg(pool)
     super({ adapter })
