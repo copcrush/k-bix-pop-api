@@ -26,11 +26,23 @@ function corsOrigin(
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableCors({
+    origin: corsOrigin,
+    credentials: true,
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Accept',
+      'Authorization',
+      'Device',
+      'X-Requested-With',
+    ],
+    exposedHeaders: ['Set-Cookie'],
+  });
 
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
-  app.enableCors({ origin: corsOrigin, credentials: true });
   app.setGlobalPrefix('api');
 
   const port = Number(process.env.PORT) || 8888;
