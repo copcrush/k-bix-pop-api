@@ -101,7 +101,7 @@ export class UserService {
 
         const ok = await bcrypt.compare(dto.currentPassword!, user.password);
         if (!ok) {
-          throw new UnauthorizedException('Current password is incorrect');
+          throw new BadRequestException('Current password is incorrect');
         }
 
         const salt = await bcrypt.genSalt(10);
@@ -142,7 +142,7 @@ export class UserService {
 
     const ok = await bcrypt.compare(currentPassword, user.password);
     if (!ok) {
-      throw new UnauthorizedException('Current password is incorrect');
+      throw new BadRequestException('Current password is incorrect');
     }
 
     const salt = await bcrypt.genSalt(10);

@@ -13,7 +13,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import type { Request, Response } from 'express';
+import type * as express from 'express';
 import { JwtAuthGuard } from './strategies/jwt-auth.guard';
 import { GetUser } from './decorators/get-user.decorator';
 
@@ -31,7 +31,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async login(
     @Body() loginDto: LoginDto,
-    @Res({ passthrough: true }) response: Response,
+    @Res({ passthrough: true }) response: express.Response,
   ) {
     const loginData = await this.authService.login(loginDto);
 
@@ -53,8 +53,8 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response,
+    @Req() request: express.Request,
+    @Res({ passthrough: true }) response: express.Response,
   ) {
     // Extract token from cookie (requires cookie-parser)
     const currentRefreshToken = request.cookies['refresh_token'];
@@ -116,7 +116,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async logout(
     @GetUser() user: any,
-    @Res({ passthrough: true }) response: Response,
+    @Res({ passthrough: true }) response: express.Response,
   ) {
     await this.authService.logout(user.userId);
     response.clearCookie('refresh_token');

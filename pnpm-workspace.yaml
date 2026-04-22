@@ -1,3 +1,7 @@
+# Root is the only package (standalone repo). pnpm requires `packages` when this file exists.
+packages:
+  - '.'
+
 allowBuilds:
   '@nestjs/core': true
   '@prisma/engines': true
