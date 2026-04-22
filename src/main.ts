@@ -1,8 +1,14 @@
 import 'reflect-metadata';
-import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import {
+  ClassSerializerInterceptor,
+  type INestApplication,
+  ValidationPipe,
+} from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { isVercel } from './runtime/environment';
 
 const CORS_ORIGINS: (string | RegExp)[] = [
   'https://k-bix-pop.vercel.app',
@@ -16,7 +22,8 @@ function corsOrigin(
   cb: (err: Error | null, allow?: boolean) => void,
 ) {
   if (!origin) {
-    return cb(null, true);
+    cb(null, true);
+    return;
   }
   const ok = CORS_ORIGINS.some((rule) =>
     typeof rule === 'string' ? rule === origin : rule.test(origin),
@@ -24,8 +31,10 @@ function corsOrigin(
   cb(null, ok);
 }
 
-async function bootstrap() {
+async function createNestApp(): Promise<INestApplication> {
   const app = await NestFactory.create(AppModule);
+  app.enableShutdownHooks();
+
   app.enableCors({
     origin: corsOrigin,
     credentials: true,
@@ -40,16 +49,41 @@ async function bootstrap() {
     exposedHeaders: ['Set-Cookie'],
   });
 
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.use(cookieParser());
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+    }),
+  );
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.setGlobalPrefix('api');
 
-  const port = Number(process.env.PORT) || 8888;
-  await app.listen(port);
+  return app;
 }
 
-bootstrap().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+async function bootstrapLocal() {
+  const app = await createNestApp();
+  const port = Number(process.env.PORT);
+  await app.listen(Number.isFinite(port) && port > 0 ? port : 8888);
+}
+
+let vercelApp: INestApplication | undefined;
+
+export default async function handler(
+  req: IncomingMessage,
+  res: ServerResponse,
+): Promise<void> {
+  if (!vercelApp) {
+    vercelApp = await createNestApp();
+    await vercelApp.init();
+  }
+  vercelApp.getHttpAdapter().getInstance()(req, res);
+}
+
+if (!isVercel()) {
+  bootstrapLocal().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
