@@ -1,23 +1,12 @@
-import {
-  Injectable,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import { AppConfigService } from '../config/app-config.service';
 import { isVercel } from '../runtime/environment';
 
-/**
- * One Nest DI-scoped client per process (one per serverless invocation on Vercel).
- * Limits pg pool size on Vercel to reduce "too many connections" when many concurrent lambdas run.
- */
 @Injectable()
-export class PrismaService
-  extends PrismaClient
-  implements OnModuleInit, OnModuleDestroy
-{
+export class PrismaService extends PrismaClient implements OnModuleDestroy {
   private readonly pool: Pool;
 
   constructor(private readonly appConfig: AppConfigService) {
@@ -33,10 +22,6 @@ export class PrismaService
     const adapter = new PrismaPg(pool);
     super({ adapter });
     this.pool = pool;
-  }
-
-  async onModuleInit() {
-    await this.$connect();
   }
 
   async onModuleDestroy() {
