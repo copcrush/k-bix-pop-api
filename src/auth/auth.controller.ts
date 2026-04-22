@@ -14,8 +14,8 @@ import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import type { Request, Response } from 'express';
-import { JwtAuthGuard } from 'src/auth/strategies/jwt-auth.guard';
-import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { JwtAuthGuard } from './strategies/jwt-auth.guard';
+import { GetUser } from './decorators/get-user.decorator';
 
 @Controller('auth')
 export class AuthController {

@@ -12,8 +12,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { JwtAuthGuard } from 'src/auth/strategies/jwt-auth.guard';
-import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { JwtAuthGuard } from '../auth/strategies/jwt-auth.guard';
+import { GetUser } from '../auth/decorators/get-user.decorator';
 import { ManageUserDto } from './dto/manage-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateAddressDto } from './dto/create-address.dto';
