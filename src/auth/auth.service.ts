@@ -9,6 +9,7 @@ import { randomBytes } from 'crypto';
 import { plainToInstance } from 'class-transformer';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
+import type { SignOptions } from 'jsonwebtoken';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
@@ -209,14 +210,12 @@ export class AuthService {
 
   private async generateTokens(userId: string, email: string, role: string) {
     const payload = { sub: userId, email, role };
+    const accessSign: SignOptions = { expiresIn: '15m' };
+    const refreshSign: SignOptions = { expiresIn: '7d' };
 
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload, {
-        expiresIn: '15m', // Access token expires quickly
-      }),
-      this.jwtService.signAsync(payload, {
-        expiresIn: '7d', // Refresh token lives much longer
-      }),
+      this.jwtService.signAsync(payload, accessSign),
+      this.jwtService.signAsync(payload, refreshSign),
     ]);
 
     return { accessToken, refreshToken };
